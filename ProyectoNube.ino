@@ -1,7 +1,7 @@
 #include "ThingsBoard.h"
 #include <ESP8266WiFi.h>
 
-
+// TODO: Change to the WiFi network used
 #define WIFI_AP "Foysal"           // name of your wifi
 #define WIFI_PASSWORD "asdfghjkl"  // password of your wifi
 
@@ -12,7 +12,9 @@
 
 // Baud rate for debug serial
 #define SERIAL_DEBUG_BAUD 115200
-int var = 1;
+
+// Alcohol sensor
+#define MQ3 0
 
 // Initialize ThingsBoard client
 WiFiClient espClient;
@@ -27,29 +29,6 @@ void setup() {
   WiFi.begin(WIFI_AP, WIFI_PASSWORD);
   InitWiFi();
 }
-
-bool subscribed = false;
-
-RPC_Response ts1(const RPC_Data &data) {
-  Serial.println("Received the set switch method 4!");
-  char params[10];
-  serializeJson(data, params);
-  //Serial.println(params);
-  String _params = params;
-  if (_params == "true") {
-    Serial.println("Toggle Switch - 1 => On");
-
-  } else if (_params == "false") {
-    Serial.println("Toggle Switch - 1 => Off");
-  }
-}
-
-
-const size_t callbacks_size = 1;
-RPC_Callback callbacks[callbacks_size] = {
-  { "getValue_1", ts1 }  // enter the name of your switch variable inside the string
-
-};
 
 void loop() {
   delay(1000);
@@ -71,25 +50,11 @@ void loop() {
     }
   }
 
-  if (!subscribed) {
-    Serial.println("Subscribing for RPC...");
+  int alcohol = analogRead(MQ3);
 
-    // Perform a subscription. All consequent data processing will happen in
-    // processTemperatureChange() and processSwitchChange() functions,
-    // as denoted by callbacks[] array.
-    if (!tb.RPC_Subscribe(callbacks, callbacks_size)) {
-      Serial.println("Failed to subscribe for RPC");
-      return;
-    }
+  Serial.println("Sending data...");
 
-    Serial.println("Subscribe done");
-    subscribed = true;
-  }
-
-  //Serial.println("Sending data...");
-
-  //tb.sendTelemetryInt("temperature", var);
-  //var ++;
+  tb.sendTelemetryInt("alcohol", alcohol);
 
   tb.loop();
 }
